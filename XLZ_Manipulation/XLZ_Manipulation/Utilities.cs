@@ -8,7 +8,7 @@ using System.Web;
 using System.Xml;
 
 
-/* OPENINING XLZ */
+/* READING FILE FROM XLZ */
 
 /* Description: ReadFileFromXLZ method is opening XLZ file on a given path by xlzFile argument and then searches for the file of the given extension by the passed argument searchExtension. As The XLZ file 
  * according to the standard, has to contain skeleton.skl and content.xlf files it allow to open them (and other files included in XLZ file like source file). The function then returns content of the file 
@@ -17,7 +17,7 @@ using System.Xml;
  * 
  */
 
-/* SAVING XLZ */
+/* SAVING FILE TO XLZ */
 
 /* Description: ReadFileFromXLZ method is opening XLZ file on a given path by xlzFile argument and then searches for the file of the given extension by the passed argument searchExtension. As The XLZ file 
  * according to the standard, has to contain skeleton.skl and content.xlf files it allow to open them (and other files included in XLZ file like source file). The function then returns content of the file 
@@ -32,7 +32,7 @@ using System.Xml;
  * 
  */
 
-/* UPDATING XLZ FILE */
+/* UPDATING FILE IN XLZ */
 
 /* 
  * 
@@ -79,6 +79,8 @@ namespace XLZ_Manipulation
                     return foundFiles;
             }
         }
+
+        /* READING FILE FROM XLZ */
 
         /* 
          * 
@@ -247,6 +249,8 @@ namespace XLZ_Manipulation
             return ReadFileFromXLZByFullName(xlzFile, "skeleton.skl");
         }
 
+        /* SAVE FILE TO XLZ */
+
         /* 
          * 
          */
@@ -413,53 +417,5 @@ namespace XLZ_Manipulation
 
             return ReadFileFromXLZByFullName(xlzFile, "skeleton.skl");
         }
-
-        /* 
-         * 
-         */
-        /*public static void DeleteFileFromXLZ(string xlzFile, string searchExtension)
-        {
-            try
-            {
-                using (ZipArchive xlzArchive = ZipFile.Open(xlzFile, ZipArchiveMode.Update))
-                {
-
-                    ZipArchiveEntry searchFile = xlzArchive.Entries.First(x => x.Name.ToLower().EndsWith("." + searchExtension.ToLower().Trim()));
-
-                    if (searchFile != null)
-                    {
-                        using (Stream stream = searchFile.Open())
-                        {
-                            searchFile.Delete();
-                        }
-                    }
-                    else
-                    {
-                        throw new Exception(String.Format("Please check your file: {0} - file of the format {1} is missing.", Path.GetFileName(xlzFile), searchExtension));
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(String.Format("Please check your file: {0} - this is not a valid archive - possibility to process file outside of TMS may be required:ex {1}", Path.GetFileName(xlzFile), ex.ToString()));
-            }
-        }*/
-
-        /* 
-         * 
-         */
-        /*public static void DeleteContentXLF(string xlzFile)
-        {
-            DeleteFileFromXLZ(xlzFile, "xlf");
-        }*/
-
-        /* 
-         * 
-         */
-        /*public static void DeleteSkeletonSKL(string xlzFile)
-        {
-            DeleteFileFromXLZ(xlzFile, "skl");
-        }*/
-
     }
 }
