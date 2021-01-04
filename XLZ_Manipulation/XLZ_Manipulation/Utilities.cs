@@ -45,25 +45,45 @@ namespace XLZ_Manipulation
         /* 
          * 
          */
-        /*public static IEnumerable<ZipArchiveEntry> GetFilesByFullName(ZipArchive zipArchive)
+        public static IEnumerable<ZipArchiveEntry> GetFilesByFullName(ZipArchive zipArchive, string search)
         {
-            return zipArchive.Entries.Where(x => x.Name.ToLower() == fileName.ToLower());
+            return zipArchive.Entries.Where(x => x.Name.ToLower() == search.ToLower());
         }
 
-        public static IEnumerable<ZipArchiveEntry> GetFilesByFullName(ZipArchive zipArchive)
+        public static IEnumerable<ZipArchiveEntry> GetFilesByName(ZipArchive zipArchive, string search)
         {
-
+            return zipArchive.Entries.Where(x => x.Name.ToLower().Contains(search.ToLower()));
         }
 
-        public static IEnumerable<ZipArchiveEntry> GetFilesByFullName(ZipArchive zipArchive)
+        public static IEnumerable<ZipArchiveEntry> GetFilesByExtension(ZipArchive zipArchive, string search)
         {
+            return zipArchive.Entries.Where(x => x.Name.ToLower().EndsWith("." + search.ToLower().Trim()));
+        }
 
-        }*/
+        public static IEnumerable<ZipArchiveEntry> GetFilesByExtension(ZipArchive zipArchive, string search, int searchOption)
+        {
+            IEnumerable<ZipArchiveEntry> foundFiles = null;
+
+            switch (searchOption)
+            {
+                case 1:
+                    foundFiles = GetFilesByFullName(zipArchive, search);
+                    return foundFiles;
+                case 2:
+                    foundFiles = GetFilesByName(zipArchive, search);
+                    return foundFiles;
+                case 3:
+                    foundFiles = GetFilesByExtension(zipArchive, search);
+                    return foundFiles;
+                default:
+                    return foundFiles;
+            }
+        }
 
         /* 
          * 
          */
-        public static List<string> ReadFilesFromXLZByFullName(string xlzFile, string fileName)
+        public static List<string> ReadFilesFromXLZ(string xlzFile, string search, int searchOption, bool ifDelete)
         {
             List<string> foundFilesStringList = new List<string>();
             string foundFileString = String.Empty;
@@ -73,7 +93,7 @@ namespace XLZ_Manipulation
                 using (ZipArchive xlzArchive = ZipFile.OpenRead(xlzFile))
                 {
 
-                    IEnumerable<ZipArchiveEntry> foundFiles = xlzArchive.Entries.Where(x => x.Name.ToLower() == fileName.ToLower());
+                    IEnumerable<ZipArchiveEntry> foundFiles = GetFilesByExtension(xlzArchive, search, searchOption);                  
 
                     if (foundFiles.Count() > 0)
                     {
@@ -85,12 +105,27 @@ namespace XLZ_Manipulation
                                 foundFileString = reader.ReadToEnd();
 
                                 foundFilesStringList.Add(foundFileString);
+
+                                if (ifDelete)
+                                {
+                                    foundFile.Delete();
+                                }
                             }
-                        }                       
+                        }
                     }
                     else
                     {
-                        throw new Exception(String.Format("Please check your file: {0} - file of the name {1} is missing.", Path.GetFileName(xlzFile), fileName));
+                        switch (searchOption)
+                        {
+                            case 1:
+                                throw new Exception(String.Format("Please check your file: {0} - file of the name {1} is missing.", Path.GetFileName(xlzFile), search));
+                            case 2:
+                                throw new Exception(String.Format("Please check your file: {0} - file containing a name {1} is missing.", Path.GetFileName(xlzFile), search));
+                            case 3:
+                                throw new Exception(String.Format("Please check your file: {0} - file of the extension {1} is missing.", Path.GetFileName(xlzFile), search));
+                            default:
+                                throw new Exception(String.Format("Search option not supported."));
+                        }
                     }
                 }
             }
@@ -100,6 +135,14 @@ namespace XLZ_Manipulation
             }
 
             return foundFilesStringList;
+        }
+
+        /* 
+         * 
+         */
+        public static List<string> ReadFilesFromXLZByFullName(string xlzFile, string fileName)
+        {
+            return ReadFilesFromXLZ(xlzFile, fileName, 1, false);
         }
 
         /* 
@@ -107,41 +150,7 @@ namespace XLZ_Manipulation
          */
         public static List<string> ReadFilesFromXLZByName(string xlzFile, string fileName)
         {
-            List<string> foundFilesStringList = new List<string>();
-            string foundFileString = String.Empty;
-
-            try
-            {
-                using (ZipArchive xlzArchive = ZipFile.OpenRead(xlzFile))
-                {
-
-                    IEnumerable<ZipArchiveEntry> foundFiles = xlzArchive.Entries.Where(x => x.Name.ToLower().Contains(fileName.ToLower()));
-
-                    if (foundFiles.Count() > 0)
-                    {
-                        foreach (ZipArchiveEntry foundFile in foundFiles)
-                        {
-                            using (Stream stream = foundFile.Open())
-                            {
-                                StreamReader reader = new StreamReader(stream);
-                                foundFileString = reader.ReadToEnd();
-
-                                foundFilesStringList.Add(foundFileString);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        throw new Exception(String.Format("Please check your file: {0} - file of the name containing {1} is missing.", Path.GetFileName(xlzFile), fileName));
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(String.Format("Please check your file: {0} - this is not a valid archive - possibility to process file outside of TMS may be required:ex {1}", Path.GetFileName(xlzFile), ex.ToString()));
-            }
-
-            return foundFilesStringList;
+            return ReadFilesFromXLZ(xlzFile, fileName, 2, false);
         }
 
         /* 
@@ -149,41 +158,7 @@ namespace XLZ_Manipulation
          */
         public static List<string> ReadFilesFromXLZByExtension(string xlzFile, string fileExtension)
         {
-            List<string> foundFilesStringList = new List<string>();
-            string foundFileString = String.Empty;
-
-            try
-            {
-                using (ZipArchive xlzArchive = ZipFile.OpenRead(xlzFile))
-                {
-
-                    IEnumerable<ZipArchiveEntry> foundFiles = xlzArchive.Entries.Where(x => x.Name.ToLower().EndsWith("." + fileExtension.ToLower().Trim()));
-
-                    if (foundFiles.Count() > 0)
-                    {
-                        foreach (ZipArchiveEntry foundFile in foundFiles)
-                        {
-                            using (Stream stream = foundFile.Open())
-                            {
-                                StreamReader reader = new StreamReader(stream);
-                                foundFileString = reader.ReadToEnd();
-
-                                foundFilesStringList.Add(foundFileString);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        throw new Exception(String.Format("Please check your file: {0} - file of the format {1} is missing.", Path.GetFileName(xlzFile), fileExtension));
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(String.Format("Please check your file: {0} - this is not a valid archive - possibility to process file outside of TMS may be required:ex {1}", Path.GetFileName(xlzFile), ex.ToString()));
-            }
-
-            return foundFilesStringList;
+            return ReadFilesFromXLZ(xlzFile, fileExtension, 3, false);
         }
 
         /* 
@@ -287,15 +262,165 @@ namespace XLZ_Manipulation
          */
         public static void SaveSkeletonSKL(string xlzFile, string fileContent)
         {
-            SaveFileToXLZ(xlzFile, "skl", fileContent);
+            SaveFileToXLZ(xlzFile, "skeleton.skl", fileContent);
         }
 
         /* DELETING FILE FROM XLZ */
 
+
         /* 
          * 
          */
-        public static void DeleteFileFromXLZ(string xlzFile, string searchExtension)
+        public static List<string> DeleteFilesFromXLZByFullName(string xlzFile, string fileName)
+        {
+            return ReadFilesFromXLZ(xlzFile, fileName, 1, true);
+        }
+
+        /* 
+         * 
+         */
+        public static List<string> DeleteFilesFromXLZByName(string xlzFile, string fileName)
+        {
+            return ReadFilesFromXLZ(xlzFile, fileName, 2, true);
+        }
+
+        /* 
+         * 
+         */
+        public static List<string> DeleteFilesFromXLZByExtension(string xlzFile, string fileExtension)
+        {
+            return ReadFilesFromXLZ(xlzFile, fileExtension, 3, true);
+        }
+
+        /* 
+         * 
+         */
+        public static string DeleteFileFromXLZByFullName(string xlzFile, string fileName)
+        {
+            List<string> foundFiles = DeleteFilesFromXLZByFullName(xlzFile, fileName);
+            string foundFile = String.Empty;
+
+            if (foundFiles.Count == 1)
+            {
+                foundFile = foundFiles.ElementAt(0);
+            }
+
+            return foundFile;
+        }
+
+        /* 
+         * 
+         */
+        public static string DeleteFileFromXLZByName(string xlzFile, string fileName)
+        {
+            List<string> foundFiles = DeleteFilesFromXLZByName(xlzFile, fileName);
+            string foundFile = String.Empty;
+
+            if (foundFiles.Count == 1)
+            {
+                foundFile = foundFiles.ElementAt(0);
+            }
+
+            return foundFile;
+        }
+
+        /* 
+         * 
+         */
+        public static string DeleteFileFromXLZByExtension(string xlzFile, string fileExtension)
+        {
+            List<string> foundFiles = DeleteFilesFromXLZByExtension(xlzFile, fileExtension);
+            string foundFile = String.Empty;
+
+            if (foundFiles.Count == 1)
+            {
+                foundFile = foundFiles.ElementAt(0);
+            }
+
+            return foundFile;
+        }
+
+        /* 
+         * 
+         */
+        public static string DeleteContentXLF(string xlzFile)
+        {
+            return DeleteFileFromXLZByFullName(xlzFile, "content.xlf");
+        }
+
+        /* 
+         * 
+         */
+        public static string DeleteSkeletonSKL(string xlzFile)
+        {
+            return DeleteFileFromXLZByFullName(xlzFile, "skeleton.skl");
+        }
+
+        /* UPDATE FILE IN XLZ */
+
+        /* 
+         * 
+         */
+        public static string UpdateFileFromXLZByFullName(string xlzFile, string fileName, string updatedFileContent)
+        {
+
+            DeleteFileFromXLZByFullName(xlzFile, fileName);
+            SaveFileToXLZ(xlzFile, fileName, updatedFileContent);
+
+            return ReadFileFromXLZByFullName(xlzFile, fileName);
+        }
+
+        /* 
+         * 
+         */
+        public static string UpdateFileFromXLZByName(string xlzFile, string fileName, string updatedFileContent)
+        {
+
+            DeleteFileFromXLZByName(xlzFile, fileName);
+            SaveFileToXLZ(xlzFile, fileName, updatedFileContent);
+
+            return ReadFileFromXLZByName(xlzFile, fileName);
+        }
+
+        /* 
+         * 
+         */
+        public static string UpdateFileFromXLZByExtension(string xlzFile, string fileExtension, string updatedFileContent)
+        {
+
+            DeleteFileFromXLZByExtension(xlzFile, fileExtension);
+            SaveFileToXLZ(xlzFile, fileExtension, updatedFileContent);
+
+            return ReadFileFromXLZByExtension(xlzFile, fileExtension);
+        }
+
+        /* 
+         * 
+         */
+        public static string UpdateContentXLF(string xlzFile, string updatedFileContent)
+        {
+            DeleteFileFromXLZByFullName(xlzFile, "content.xlf");
+            SaveFileToXLZ(xlzFile, "content.xlf", updatedFileContent);
+
+            return ReadFileFromXLZByFullName(xlzFile, "content.xlf");
+        }
+
+        /* 
+         * 
+         */
+        public static string UpdateSkeletonSKL(string xlzFile, string updatedFileContent)
+        {
+
+            DeleteFileFromXLZByFullName(xlzFile, "skeleton.skl");
+            SaveFileToXLZ(xlzFile, "skeleton.skl", updatedFileContent);
+
+            return ReadFileFromXLZByFullName(xlzFile, "skeleton.skl");
+        }
+
+        /* 
+         * 
+         */
+        /*public static void DeleteFileFromXLZ(string xlzFile, string searchExtension)
         {
             try
             {
@@ -321,23 +446,23 @@ namespace XLZ_Manipulation
             {
                 throw new Exception(String.Format("Please check your file: {0} - this is not a valid archive - possibility to process file outside of TMS may be required:ex {1}", Path.GetFileName(xlzFile), ex.ToString()));
             }
-        }
+        }*/
 
         /* 
          * 
          */
-        public static void DeleteContentXLF(string xlzFile)
+        /*public static void DeleteContentXLF(string xlzFile)
         {
             DeleteFileFromXLZ(xlzFile, "xlf");
-        }
+        }*/
 
         /* 
          * 
          */
-        public static void DeleteSkeletonSKL(string xlzFile)
+        /*public static void DeleteSkeletonSKL(string xlzFile)
         {
             DeleteFileFromXLZ(xlzFile, "skl");
-        }
+        }*/
 
     }
 }
