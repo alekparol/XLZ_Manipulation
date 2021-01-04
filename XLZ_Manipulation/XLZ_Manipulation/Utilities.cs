@@ -90,28 +90,50 @@ namespace XLZ_Manipulation
 
             try
             {
-                using (ZipArchive xlzArchive = ZipFile.OpenRead(xlzFile))
+                using (ZipArchive xlzArchive = ZipFile.Open(xlzFile, ZipArchiveMode.Update))
                 {
 
                     IEnumerable<ZipArchiveEntry> foundFiles = GetFilesByExtension(xlzArchive, search, searchOption);                  
 
                     if (foundFiles.Count() > 0)
-                    {
-                        foreach (ZipArchiveEntry foundFile in foundFiles)
+                    {   
+                        if (foundFiles.Count() == 1)
                         {
-                            using (Stream stream = foundFile.Open())
+                            using (Stream stream = foundFiles.ElementAt(0).Open())
                             {
+
                                 StreamReader reader = new StreamReader(stream);
                                 foundFileString = reader.ReadToEnd();
 
                                 foundFilesStringList.Add(foundFileString);
 
-                                if (ifDelete)
-                                {
-                                    foundFile.Delete();
-                                }
+                            }
+
+                            if(ifDelete)
+                            {
+                                foundFiles.ElementAt(0).Delete();
                             }
                         }
+                        else
+                        {
+                            foreach (ZipArchiveEntry foundFile in foundFiles)
+                            {
+                                using (Stream stream = foundFile.Open())
+                                {
+
+                                    StreamReader reader = new StreamReader(stream);
+                                    foundFileString = reader.ReadToEnd();
+
+                                    foundFilesStringList.Add(foundFileString);
+
+                                }
+                            }
+
+                            if (ifDelete)
+                            {
+                                throw new Exception(String.Format("There are mutliple files found. The archive is not valid."));
+                            }
+                        }                            
                     }
                     else
                     {
@@ -267,37 +289,12 @@ namespace XLZ_Manipulation
 
         /* DELETING FILE FROM XLZ */
 
-
-        /* 
-         * 
-         */
-        public static List<string> DeleteFilesFromXLZByFullName(string xlzFile, string fileName)
-        {
-            return ReadFilesFromXLZ(xlzFile, fileName, 1, true);
-        }
-
-        /* 
-         * 
-         */
-        public static List<string> DeleteFilesFromXLZByName(string xlzFile, string fileName)
-        {
-            return ReadFilesFromXLZ(xlzFile, fileName, 2, true);
-        }
-
-        /* 
-         * 
-         */
-        public static List<string> DeleteFilesFromXLZByExtension(string xlzFile, string fileExtension)
-        {
-            return ReadFilesFromXLZ(xlzFile, fileExtension, 3, true);
-        }
-
         /* 
          * 
          */
         public static string DeleteFileFromXLZByFullName(string xlzFile, string fileName)
         {
-            List<string> foundFiles = DeleteFilesFromXLZByFullName(xlzFile, fileName);
+            List<string> foundFiles = ReadFilesFromXLZ(xlzFile, fileName, 1, true);
             string foundFile = String.Empty;
 
             if (foundFiles.Count == 1)
@@ -313,7 +310,7 @@ namespace XLZ_Manipulation
          */
         public static string DeleteFileFromXLZByName(string xlzFile, string fileName)
         {
-            List<string> foundFiles = DeleteFilesFromXLZByName(xlzFile, fileName);
+            List<string> foundFiles = ReadFilesFromXLZ(xlzFile, fileName, 2, true);
             string foundFile = String.Empty;
 
             if (foundFiles.Count == 1)
@@ -329,7 +326,7 @@ namespace XLZ_Manipulation
          */
         public static string DeleteFileFromXLZByExtension(string xlzFile, string fileExtension)
         {
-            List<string> foundFiles = DeleteFilesFromXLZByExtension(xlzFile, fileExtension);
+            List<string> foundFiles = ReadFilesFromXLZ(xlzFile, fileExtension, 3, true);
             string foundFile = String.Empty;
 
             if (foundFiles.Count == 1)
