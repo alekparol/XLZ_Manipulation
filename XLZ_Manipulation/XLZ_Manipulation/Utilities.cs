@@ -17,10 +17,67 @@ using System.Xml;
  * 
  */
 
+/* SAVING XLZ */
+
+/* Description: ReadFileFromXLZ method is opening XLZ file on a given path by xlzFile argument and then searches for the file of the given extension by the passed argument searchExtension. As The XLZ file 
+ * according to the standard, has to contain skeleton.skl and content.xlf files it allow to open them (and other files included in XLZ file like source file). The function then returns content of the file 
+ * saved in the string variable. 
+ * Usage: this method is used to get content.xlf file in our program.
+ * 
+ */
+
+/* DELETING FILE FROM XLZ */
+
+/* 
+ * 
+ */
+
+/* UPDATING XLZ FILE */
+
+/* 
+ * 
+ */
+
 namespace XLZ_Manipulation
 {
     public class Utilities
     {
+        /* 
+         * 
+         */
+        public static string ReadFileFromXLZ(string xlzFile, string fileName, string fileExtension)
+        {
+            string searchFileString = String.Empty;
+
+            try
+            {
+                using (ZipArchive xlzArchive = ZipFile.OpenRead(xlzFile))
+                {
+
+                    ZipArchiveEntry searchFile = xlzArchive.Entries.First(x => x.Name.ToLower() == fileName.ToLower());
+
+                    if (searchFile != null && searchFile.Name.EndsWith("." + fileExtension.ToLower().Trim()))
+                    {
+                        using (Stream stream = searchFile.Open())
+                        {
+                            StreamReader reader = new StreamReader(stream);
+                            searchFileString = reader.ReadToEnd();
+                        }
+                    }
+                    else
+                    {
+                        throw new Exception(String.Format("Please check your file: {0} - file of the format {1} is missing.", Path.GetFileName(xlzFile), fileExtension));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(String.Format("Please check your file: {0} - this is not a valid archive - possibility to process file outside of TMS may be required:ex {1}", Path.GetFileName(xlzFile), ex.ToString()));
+            }
+
+            return searchFileString;
+        }
+
         public static string ReadFileFromXLZ(string xlzFile, string searchExtension)
         {
             string searchFileString = String.Empty;
@@ -54,8 +111,7 @@ namespace XLZ_Manipulation
             return searchFileString;
         }
 
-        /* Description: ReadContentXLF is a method that uses ReadFileFromXLZ but with defined extension as "xlf" to return content.xlf file.
-         * Usage: this method is used to get content.xlf file in our program.
+        /* 
          * 
          */
         public static string ReadContentXLF(string xlzFile)
@@ -63,8 +119,7 @@ namespace XLZ_Manipulation
             return ReadFileFromXLZ(xlzFile, "xlf");
         }
 
-        /* Description: ReadContentSKL is a method that uses ReadFileFromXLZ but with defined extension as "skl" to return skeleton.skl file.
-         * Usage: this method is not used in our program yet.
+        /* 
          * 
          */
         public static string ReadSkeletonSKL(string xlzFile)
@@ -72,12 +127,7 @@ namespace XLZ_Manipulation
             return ReadFileFromXLZ(xlzFile, "skl");
         }
 
-        /* SAVING XLZ */
-
-        /* Description: ReadFileFromXLZ method is opening XLZ file on a given path by xlzFile argument and then searches for the file of the given extension by the passed argument searchExtension. As The XLZ file 
-         * according to the standard, has to contain skeleton.skl and content.xlf files it allow to open them (and other files included in XLZ file like source file). The function then returns content of the file 
-         * saved in the string variable. 
-         * Usage: this method is used to get content.xlf file in our program.
+        /* 
          * 
          */
         public static void SaveFileToXLZ(string xlzFile, string fileName, string fileContent)
@@ -101,22 +151,20 @@ namespace XLZ_Manipulation
             }
         }
 
-        /* Description: ReadContentXLF is a method that uses ReadFileFromXLZ but with defined extension as "xlf" to return content.xlf file.
-         * Usage: this method is used to get content.xlf file in our program.
+        /* 
          * 
          */
-        public static string SaveContentXLF(string xlzFile)
+        public static void SaveContentXLF(string xlzFile, string fileContent)
         {
-            return ReadFileFromXLZ(xlzFile, "xlf");
+            SaveFileToXLZ(xlzFile, "content.xlf", fileContent);
         }
 
-        /* Description: ReadContentSKL is a method that uses ReadFileFromXLZ but with defined extension as "skl" to return skeleton.skl file.
-         * Usage: this method is not used in our program yet.
+        /* 
          * 
          */
-        public static string SaveSkeletonSKL(string xlzFile)
+        public static void SaveSkeletonSKL(string xlzFile, string fileContent)
         {
-            return ReadFileFromXLZ(xlzFile, "skl");
+            SaveFileToXLZ(xlzFile, "skl", fileContent);
         }
 
         /* DELETING FILE FROM XLZ */
@@ -124,7 +172,7 @@ namespace XLZ_Manipulation
         /* 
          * 
          */
-        public static int DeleteFileFromXLZ(string xlzFile, string searchExtension)
+        public static void DeleteFileFromXLZ(string xlzFile, string searchExtension)
         {
             try
             {
@@ -138,14 +186,11 @@ namespace XLZ_Manipulation
                         using (Stream stream = searchFile.Open())
                         {
                             searchFile.Delete();
-                            return 1;
                         }
                     }
                     else
                     {
                         throw new Exception(String.Format("Please check your file: {0} - file of the format {1} is missing.", Path.GetFileName(xlzFile), searchExtension));
-
-                        return -1;
                     }
                 }
             }
@@ -153,26 +198,22 @@ namespace XLZ_Manipulation
             {
                 throw new Exception(String.Format("Please check your file: {0} - this is not a valid archive - possibility to process file outside of TMS may be required:ex {1}", Path.GetFileName(xlzFile), ex.ToString()));
             }
-
-            return 0;
         }
 
-        /* Description: ReadContentXLF is a method that uses ReadFileFromXLZ but with defined extension as "xlf" to return content.xlf file.
-         * Usage: this method is used to get content.xlf file in our program.
+        /* 
          * 
          */
-        public static int DeleteContentXLF(string xlzFile)
+        public static void DeleteContentXLF(string xlzFile)
         {
-            return DeleteFileFromXLZ(xlzFile, "xlf");
+            DeleteFileFromXLZ(xlzFile, "xlf");
         }
 
-        /* Description: ReadContentSKL is a method that uses ReadFileFromXLZ but with defined extension as "skl" to return skeleton.skl file.
-         * Usage: this method is not used in our program yet.
+        /* 
          * 
          */
-        public static int DeleteSkeletonSKL(string xlzFile)
+        public static void DeleteSkeletonSKL(string xlzFile)
         {
-            return DeleteFileFromXLZ(xlzFile, "skl");
+            DeleteFileFromXLZ(xlzFile, "skl");
         }
 
     }
