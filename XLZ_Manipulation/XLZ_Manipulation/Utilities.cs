@@ -45,23 +45,131 @@ namespace XLZ_Manipulation
         /* 
          * 
          */
-        public static string ReadFileFromXLZ(string xlzFile, string fileName, string fileExtension)
+        /*public static IEnumerable<ZipArchiveEntry> GetFilesByFullName(ZipArchive zipArchive)
         {
-            string searchFileString = String.Empty;
+            return zipArchive.Entries.Where(x => x.Name.ToLower() == fileName.ToLower());
+        }
+
+        public static IEnumerable<ZipArchiveEntry> GetFilesByFullName(ZipArchive zipArchive)
+        {
+
+        }
+
+        public static IEnumerable<ZipArchiveEntry> GetFilesByFullName(ZipArchive zipArchive)
+        {
+
+        }*/
+
+        /* 
+         * 
+         */
+        public static List<string> ReadFilesFromXLZByFullName(string xlzFile, string fileName)
+        {
+            List<string> foundFilesStringList = new List<string>();
+            string foundFileString = String.Empty;
 
             try
             {
                 using (ZipArchive xlzArchive = ZipFile.OpenRead(xlzFile))
                 {
 
-                    ZipArchiveEntry searchFile = xlzArchive.Entries.First(x => x.Name.ToLower() == fileName.ToLower());
+                    IEnumerable<ZipArchiveEntry> foundFiles = xlzArchive.Entries.Where(x => x.Name.ToLower() == fileName.ToLower());
 
-                    if (searchFile != null && searchFile.Name.EndsWith("." + fileExtension.ToLower().Trim()))
+                    if (foundFiles.Count() > 0)
                     {
-                        using (Stream stream = searchFile.Open())
+                        foreach (ZipArchiveEntry foundFile in foundFiles)
                         {
-                            StreamReader reader = new StreamReader(stream);
-                            searchFileString = reader.ReadToEnd();
+                            using (Stream stream = foundFile.Open())
+                            {
+                                StreamReader reader = new StreamReader(stream);
+                                foundFileString = reader.ReadToEnd();
+
+                                foundFilesStringList.Add(foundFileString);
+                            }
+                        }                       
+                    }
+                    else
+                    {
+                        throw new Exception(String.Format("Please check your file: {0} - file of the name {1} is missing.", Path.GetFileName(xlzFile), fileName));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(String.Format("Please check your file: {0} - this is not a valid archive - possibility to process file outside of TMS may be required:ex {1}", Path.GetFileName(xlzFile), ex.ToString()));
+            }
+
+            return foundFilesStringList;
+        }
+
+        /* 
+         * 
+         */
+        public static List<string> ReadFilesFromXLZByName(string xlzFile, string fileName)
+        {
+            List<string> foundFilesStringList = new List<string>();
+            string foundFileString = String.Empty;
+
+            try
+            {
+                using (ZipArchive xlzArchive = ZipFile.OpenRead(xlzFile))
+                {
+
+                    IEnumerable<ZipArchiveEntry> foundFiles = xlzArchive.Entries.Where(x => x.Name.ToLower().Contains(fileName.ToLower()));
+
+                    if (foundFiles.Count() > 0)
+                    {
+                        foreach (ZipArchiveEntry foundFile in foundFiles)
+                        {
+                            using (Stream stream = foundFile.Open())
+                            {
+                                StreamReader reader = new StreamReader(stream);
+                                foundFileString = reader.ReadToEnd();
+
+                                foundFilesStringList.Add(foundFileString);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        throw new Exception(String.Format("Please check your file: {0} - file of the name containing {1} is missing.", Path.GetFileName(xlzFile), fileName));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(String.Format("Please check your file: {0} - this is not a valid archive - possibility to process file outside of TMS may be required:ex {1}", Path.GetFileName(xlzFile), ex.ToString()));
+            }
+
+            return foundFilesStringList;
+        }
+
+        /* 
+         * 
+         */
+        public static List<string> ReadFilesFromXLZByExtension(string xlzFile, string fileExtension)
+        {
+            List<string> foundFilesStringList = new List<string>();
+            string foundFileString = String.Empty;
+
+            try
+            {
+                using (ZipArchive xlzArchive = ZipFile.OpenRead(xlzFile))
+                {
+
+                    IEnumerable<ZipArchiveEntry> foundFiles = xlzArchive.Entries.Where(x => x.Name.ToLower().EndsWith("." + fileExtension.ToLower().Trim()));
+
+                    if (foundFiles.Count() > 0)
+                    {
+                        foreach (ZipArchiveEntry foundFile in foundFiles)
+                        {
+                            using (Stream stream = foundFile.Open())
+                            {
+                                StreamReader reader = new StreamReader(stream);
+                                foundFileString = reader.ReadToEnd();
+
+                                foundFilesStringList.Add(foundFileString);
+                            }
                         }
                     }
                     else
@@ -75,40 +183,55 @@ namespace XLZ_Manipulation
                 throw new Exception(String.Format("Please check your file: {0} - this is not a valid archive - possibility to process file outside of TMS may be required:ex {1}", Path.GetFileName(xlzFile), ex.ToString()));
             }
 
-            return searchFileString;
+            return foundFilesStringList;
         }
 
-        public static string ReadFileFromXLZ(string xlzFile, string searchExtension)
+        /* 
+         * 
+         */
+        public static string ReadFileFromXLZByFullName(string xlzFile, string fileName)
         {
-            string searchFileString = String.Empty;
+            List<string> foundFiles = ReadFilesFromXLZByFullName(xlzFile, fileName);
+            string foundFile = String.Empty;
 
-            try
+            if (foundFiles.Count == 1)
             {
-                using (ZipArchive xlzArchive = ZipFile.OpenRead(xlzFile))
-                {
-
-                    ZipArchiveEntry searchFile = xlzArchive.Entries.First(x => x.Name.ToLower().EndsWith("." + searchExtension.ToLower().Trim()));
-
-                    if (searchFile != null)
-                    {
-                        using (Stream stream = searchFile.Open())
-                        {
-                            StreamReader reader = new StreamReader(stream);
-                            searchFileString = reader.ReadToEnd();
-                        }
-                    }
-                    else
-                    {
-                        throw new Exception(String.Format("Please check your file: {0} - file of the format {1} is missing.", Path.GetFileName(xlzFile), searchExtension));
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(String.Format("Please check your file: {0} - this is not a valid archive - possibility to process file outside of TMS may be required:ex {1}", Path.GetFileName(xlzFile), ex.ToString()));
+                foundFile = foundFiles.ElementAt(0);
             }
 
-            return searchFileString;
+            return foundFile;
+        }
+
+        /* 
+         * 
+         */
+        public static string ReadFileFromXLZByName(string xlzFile, string fileName)
+        {
+            List<string> foundFiles = ReadFilesFromXLZByName(xlzFile, fileName);
+            string foundFile = String.Empty;
+
+            if (foundFiles.Count == 1)
+            {
+                foundFile = foundFiles.ElementAt(0);
+            }
+
+            return foundFile;
+        }
+
+        /* 
+         * 
+         */
+        public static string ReadFileFromXLZByExtension(string xlzFile, string fileExtension)
+        {
+            List<string> foundFiles = ReadFilesFromXLZByExtension(xlzFile, fileExtension);
+            string foundFile = String.Empty;
+
+            if (foundFiles.Count == 1)
+            {
+                foundFile = foundFiles.ElementAt(0);
+            }
+
+            return foundFile;
         }
 
         /* 
@@ -116,7 +239,7 @@ namespace XLZ_Manipulation
          */
         public static string ReadContentXLF(string xlzFile)
         {
-            return ReadFileFromXLZ(xlzFile, "xlf");
+            return ReadFileFromXLZByFullName(xlzFile, "content.xlf");
         }
 
         /* 
@@ -124,7 +247,7 @@ namespace XLZ_Manipulation
          */
         public static string ReadSkeletonSKL(string xlzFile)
         {
-            return ReadFileFromXLZ(xlzFile, "skl");
+            return ReadFileFromXLZByFullName(xlzFile, "skeleton.skl");
         }
 
         /* 
